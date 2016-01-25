@@ -2,7 +2,7 @@
 
 Crom is an experimental, proof-of-concept package manager that doesn’t need its own registry. Instead, it uses GitHub as a *de facto* registry: it searches for GitHub repositories that match the name you specify, and picks the one with the highest number of stars. (Crom is built on GitHub out of convenience, but it could easily be extended to other platforms; see [open issues](https://github.com/mbostock/crom/issues).)
 
-Crom demonstrates that package managers can be decoupled from package registries. And this is good, because **package authors should be free to publish their software on any platform, and package consumers should be free to install software from any platform**.
+Crom demonstrates that package managers can be decoupled from package registries. And this is good, because **authors should be free to publish their software on any platform, and users should be free to install software from any platform**.
 
 To install Crom, use npm:
 
