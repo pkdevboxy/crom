@@ -58,20 +58,23 @@ GitHub.prototype = Object.assign(Object.create(new Registry), {
     }
     var registry = this;
     request({
-      url: this._host + "/search/repositories?q=" + encodeURIComponent(query) + "&sort=stars&order=desc",
+      url: this._host + "/search/repositories?q=" + encodeURIComponent(query),
       headers: headers
     }, function(error, response, body) {
       if (error) return void callback(error);
-      var modules;
+      var items,
+          matches,
+          modules;
 
       try {
-        modules = JSON.parse(body)
-            .items
-            .filter(function(item) { return item.name === query; })
-            .map(function(item) { return new GitHubModule(registry._host, item); });
+        items = JSON.parse(body).items;
+        matches = items.filter(function(item) { return item.name === query; });
+        modules = matches.map(function(item) { return new GitHubModule(registry._host, item); });
       } catch (error) {
         return void callback(error);
       }
+
+      if (!matches.length && items.length) console.log("? " + new GitHubModule(registry._host, items[0]));
 
       callback(null, modules);
     });
