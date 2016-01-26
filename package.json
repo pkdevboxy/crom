@@ -20,7 +20,9 @@
     "crom": "./bin/crom"
   },
   "dependencies": {
+    "d3-array": "^0.7.0",
     "d3-format": "0.5",
+    "d3-queue": "^1.2.2",
     "minimist": "1.2",
     "progress": "1.1",
     "querystring": "0.2",
