@@ -177,12 +177,10 @@ function extractRelease(root, release, file, callback) {
 
     function cleanupExtraction(callback) {
       fs.readdir(dir, function(error, files) {
-        if (error) return void callback(error);
-        if (files.length !== 1) return void cleanupFile();
+        if (error || files.length !== 1) return void callback(error);
         var subdir = path.join(dir, files[0]);
         fs.stat(subdir, function(error, stat) {
-          if (error) return void callback(error);
-          if (!stat.isDirectory()) return void cleanupFile();
+          if (error || !stat.isDirectory()) return void callback(error);
           fs.readdir(subdir, function(error, subfiles) {
             if (error) return void callback(error);
             var q = queue(1);

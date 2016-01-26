@@ -50,6 +50,12 @@ GitHub.prototype = Object.assign(Object.create(new Registry), {
     });
   },
   findModules: function(query, callback) {
+    if (/^\w[\w-]+\/\w[\w-]+$/.test(query)) {
+      return this.loadModule(this.url + "/" + query, function(error, module) {
+        if (error) return void callback(error);
+        callback(null, module ? [module] : []);
+      });
+    }
     var registry = this;
     request({
       url: this._host + "/search/repositories?q=" + encodeURIComponent(query) + "&sort=stars&order=desc",
@@ -61,10 +67,7 @@ GitHub.prototype = Object.assign(Object.create(new Registry), {
       try {
         modules = JSON.parse(body)
             .items
-            .filter(function(item) {
-              return item.name === query
-                  || item.full_name === query;
-            })
+            .filter(function(item) { return item.name === query; })
             .map(function(item) { return new GitHubModule(registry._host, item); });
       } catch (error) {
         return void callback(error);
