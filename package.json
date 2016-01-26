@@ -1,6 +1,6 @@
 {
   "name": "crom",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A package manager without a package registry.",
   "keywords": [
     "package",
