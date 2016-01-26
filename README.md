@@ -28,7 +28,7 @@ Thus, Crom allows your users to install your package and its dependencies *witho
 
 ### Version Discovery
 
-Crom refers to packages by URLs, but it still provides semantic versioning! The package URL is distinct from each release’s URL. By querying the package URL, Crom can discover the available releases and chose the release that best satisfies your given version range. Thus, Crom could also upgrade your installed dependencies in the future by comparing them to the latest releases.
+Crom refers to packages by URLs, but it still provides semantic versioning! By querying the package URL, Crom can discover the available releases and chose the release that best satisfies your given version range. Thus, Crom will be able to upgrade your installed dependencies in the future by comparing them to the latest releases.
 
 The current implementation only knows how to talk to GitHub’s [releases API](https://developer.github.com/v3/repos/releases/#list-releases-for-a-repository), but it should be straightforward to design a simple JSON API allowing release descriptions to be published anywhere on the internet. Also, I haven’t implemented `crom update` yet.
 
