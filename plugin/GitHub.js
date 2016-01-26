@@ -29,11 +29,19 @@ GitHub.prototype = Object.assign(Object.create(new Registry), {
       url: this._host + "/repos/" + owner + "/" + name,
       headers: headers
     }, function(error, response, body) {
-      if (error) return void callback(error); // TODO handle 404, return null
+      if (error) return void callback(error);
       var module;
 
       try {
-        module = new GitHubModule(registry._host, JSON.parse(body));
+        body = JSON.parse(body);
+      } catch (error) {
+        return void callback(error);
+      }
+
+      if (body.message === "Not Found") return void callback(null, null);
+
+      try {
+        module = new GitHubModule(registry._host, body);
       } catch (error) {
         return void callback(error);
       }

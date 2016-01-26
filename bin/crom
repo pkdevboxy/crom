@@ -67,6 +67,7 @@ function findAndInstall(root, name, range, direct, callback) {
   if (/^http[s]:/.test(name)) {
     Registry.loadModule(name, function(error, module) {
       if (error) return void callback(error);
+      if (!module) return void callback(new ExternalError("module " + name + " not found"));
       console.log("✓ " + module);
       installModule(module);
     });
