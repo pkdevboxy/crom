@@ -34,7 +34,7 @@ The current implementation only knows how to talk to GitHub’s [releases API](h
 
 ### Package Discovery
 
-No one wants to specify a lengthy URL every time they install a package, and you don’t have to with Crom, either. When you ask Crom to install a package by  a name, it searches an extensible list of registries and installs the best match. So this:
+When you ask Crom to install a package by name, it searches an extensible list of registries and installs the best match. So this:
 
 ```
 crom install d3-format
