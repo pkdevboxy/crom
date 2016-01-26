@@ -38,7 +38,7 @@ function install(error, root) {
   for (var i = 3, n = process.argv.length; i < n; ++i) {
     var name = process.argv[i], j = name.indexOf("@"), range = "*";
     if (j >= 0) range = name.slice(j + 1), name = name.slice(0, j);
-    q.defer(findAndInstall, root, name, range);
+    q.defer(findAndInstall, root, name, range, true);
   }
 
   q.awaitAll(done);
@@ -63,17 +63,29 @@ function done(error) {
   if (error) throw error;
 }
 
-function findAndInstall(root, name, range, callback) {
-  Registry.findModules(name, function(error, modules) {
-    if (error) return void callback(error);
-    if (!modules.length) return void callback(new ExternalError("module “" + name + "” not found"));
-
-    for (var i = 0, n = modules.length; i < n; ++i) {
-      console.log((i ? "✗" : "✓") + " " + modules[i]);
-    }
-
-    findAndInstallRelease(root, modules[0], range, function(error, release, sha) {
+function findAndInstall(root, name, range, direct, callback) {
+  if (/^http[s]:/.test(name)) {
+    Registry.loadModule(name, function(error, module) {
       if (error) return void callback(error);
+      console.log("✓ " + module);
+      installModule(module);
+    });
+  } else {
+    Registry.findModules(name, function(error, modules) {
+      if (error) return void callback(error);
+      if (!modules.length) return void callback(new ExternalError("module “" + name + "” not found"));
+
+      for (var i = 0, n = modules.length; i < n; ++i) {
+        console.log((i ? "✗" : "✓") + " " + modules[i]);
+      }
+
+      installModule(modules[0]);
+    });
+  }
+
+  function installModule(module) {
+    findAndInstallRelease(root, module, range, function(error, release, sha) {
+      if (error || !direct) return void callback(error); // Don’t save indirect dependencies.
 
       root.install(release, sha, range, function(error) {
         if (error) return void callback(error);
@@ -81,7 +93,7 @@ function findAndInstall(root, name, range, callback) {
         callback(null);
       });
     });
-  });
+  }
 }
 
 function findAndInstallRelease(root, module, range, callback) {
@@ -97,8 +109,35 @@ function findAndInstallRelease(root, module, range, callback) {
     release.download(fs.createWriteStream(file), function(error) {
       if (error) return void callback(error);
       console.log("+ " + file);
-      extractRelease(root, release, file, callback);
+      extractRelease(root, release, file, findAndInstallDependencies);
     });
+
+    function findAndInstallDependencies(error, release, sha) {
+      if (error) return void callback(error);
+
+      fs.readFile(path.join(root.dir, "crom_modules", sha, "crom.json"), function(error, file) {
+        if (error && error.code === "ENOENT") return void callback(null, release, sha);
+        if (error) return void callback(error);
+        var dependency;
+
+        try {
+          dependency = JSON.parse(file);
+        } catch (error) {
+          return void callback(error);
+        }
+
+        var q = queue(1);
+
+        dependency.dependencies.forEach(function(dependency) {
+          q.defer(findAndInstall, root, dependency.url, dependency.range, false);
+        });
+
+        q.awaitAll(function(error) {
+          if (error) return void callback(error);
+          callback(null, release, sha);
+        });
+      });
+    }
   });
 }
 

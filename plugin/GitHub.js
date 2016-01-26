@@ -19,6 +19,28 @@ function GitHub(host, url) {
 }
 
 GitHub.prototype = Object.assign(Object.create(new Registry), {
+  loadModule: function(url, callback) {
+    if (!url.startsWith(this.url + "/")) return void process.nextTick(function() { callback(new Error("unsupported url: " + url)); });
+    var parts = url.slice(this.url.length + 1).split("/"),
+        owner = parts[0],
+        name = parts[1];
+    var registry = this;
+    request({
+      url: this._host + "/repos/" + owner + "/" + name,
+      headers: headers
+    }, function(error, response, body) {
+      if (error) return void callback(error); // TODO handle 404, return null
+      var module;
+
+      try {
+        module = new GitHubModule(registry._host, JSON.parse(body));
+      } catch (error) {
+        return void callback(error);
+      }
+
+      callback(null, module);
+    });
+  },
   findModules: function(query, callback) {
     var registry = this;
     request({
