@@ -34,7 +34,7 @@ The current implementation only knows how to talk to GitHub’s [releases API](h
 
 ### Package Discovery
 
-When you ask Crom to install a package by name, it searches an extensible list of registries and installs the best match. So this:
+When you ask Crom to install a package by name, it searches an extensible list of registries and installs the best match. Although this may appear less safe than a separate `search` command, installing with Crom is safe (it merely extracts a ZIP file; it doesn’t run code), and easily undoable in the case it installed the wrong thing. This:
 
 ```
 crom install d3-format
