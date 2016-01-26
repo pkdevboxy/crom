@@ -1,6 +1,6 @@
 # Crom
 
-Crom is an experimental, proof-of-concept package manager that avoids a centralized registry. Like npm, Crom allows you to install packages conveniently by name and (optional) version range:
+Crom is an experimental, proof-of-concept package manager that avoids a centralized registry. Like other package managers, Crom allows you to install packages conveniently by name and (optional) version range:
 
 ```
 crom install d3-voronoi@0.2
