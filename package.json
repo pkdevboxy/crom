@@ -16,6 +16,7 @@
     "type": "git",
     "url": "https://github.com/mbostock/crom.git"
   },
+  "main": "index.js",
   "bin": {
     "crom": "./bin/crom"
   },

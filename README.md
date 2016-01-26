@@ -101,10 +101,11 @@ This means you can install multiple versions of a package or multiple packages w
 
 ### Loading Packages
 
-Crom is a work in progress and I haven’t yet implemented an API for loading packages (*e.g.*, a substitute for `require`). But the idea is that it would scan the crom_modules folder and look for the module matching your requirement. For example, in Node:
+So far, I’ve just implemented a substitute for `require` in Node. For example:
 
 ```js
-var format = crom.require("d3-format");
+var crom = require("crom"),
+    format = crom.require("d3-format");
 ```
 
 Since there is only one dependency named d3-format, this would succeed, loading c7c1fee. But if you had multiple packages with the same name, you’d get an error unless you specified something more explicit, such as one of these:
