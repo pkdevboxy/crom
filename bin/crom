@@ -12,14 +12,15 @@ var Registry = require("../lib/Registry"),
 
 require("../plugin/GitHub");
 
-if (process.argv[2] !== "install") {
-  console.error("error: unknown command " + process.argv[2]);
-  return process.exit(1);
-}
+var command;
 
-if (!process.argv[3]) {
-  console.error("error: missing install target");
-  return process.exit(1);
+switch (process.argv[2]) {
+  case "install": command = install; break;
+  case "uninstall": command = uninstall; break;
+  default: {
+    console.error("error: unknown command " + process.argv[2]);
+    return process.exit(1);
+  }
 }
 
 function ExternalError(message) {
@@ -28,25 +29,39 @@ function ExternalError(message) {
 
 ExternalError.prototype = Object.create(new Error);
 
-Root.init(".", function(error, root) {
-  if (error) throw error;
+Root.init(".", command);
 
+function install(error, root) {
+  if (error) return void done(error);
   var q = queue(1);
+
   for (var i = 3, n = process.argv.length; i < n; ++i) {
     var name = process.argv[i], j = name.indexOf("@"), range = "*";
     if (j >= 0) range = name.slice(j + 1), name = name.slice(0, j);
     q.defer(findAndInstall, root, name, range);
   }
-  q.awaitAll(done);
 
-  function done(error) {
-    if (error instanceof ExternalError) {
-      console.error("error: " + error.message);
-      return process.exit(1);
-    }
-    if (error) throw error;
+  q.awaitAll(done);
+}
+
+function uninstall(error, root) {
+  if (error) return void done(error);
+  var q = queue(1);
+
+  for (var i = 3, n = process.argv.length; i < n; ++i) {
+    q.defer(findAndUninstall, root, process.argv[i]);
   }
-});
+
+  q.awaitAll(done);
+}
+
+function done(error) {
+  if (error instanceof ExternalError) {
+    console.error("error: " + error.message);
+    return process.exit(1);
+  }
+  if (error) throw error;
+}
 
 function findAndInstall(root, name, range, callback) {
   Registry.findModules(name, function(error, modules) {
@@ -57,12 +72,12 @@ function findAndInstall(root, name, range, callback) {
       console.log((i ? "✗" : "✓") + " " + modules[i]);
     }
 
-    findAndInstallRelease(root, modules[0], range, function(error, release, hash) {
+    findAndInstallRelease(root, modules[0], range, function(error, release, sha) {
       if (error) return void callback(error);
 
-      root.install(release, hash, range, function(error) {
+      root.install(release, sha, range, function(error) {
         if (error) return void callback(error);
-        console.log("✓ " + path.join(root.dir, "crom.json"));
+        console.log("+ " + path.join(root.dir, "crom.json"));
         callback(null);
       });
     });
@@ -81,24 +96,24 @@ function findAndInstallRelease(root, module, range, callback) {
 
     release.download(fs.createWriteStream(file), function(error) {
       if (error) return void callback(error);
-      console.log("✓ " + file);
+      console.log("+ " + file);
       extractRelease(root, release, file, callback);
     });
   });
 }
 
-function computeHash(file, callback) {
-  var hash = crypto.createHash("sha256");
+function computeSha(file, callback) {
+  var sha = crypto.createHash("sha256");
   fs.createReadStream(file)
-      .on("data", function(chunk) { hash.update(chunk); })
+      .on("data", function(chunk) { sha.update(chunk); })
       .on("error", callback)
-      .on("end", function() { callback(null, hash.digest("hex")); });
+      .on("end", function() { callback(null, sha.digest("hex")); });
 }
 
 function extractRelease(root, release, file, callback) {
-  computeHash(file, function(error, hash) {
+  computeSha(file, function(error, sha) {
     if (error) return void callback(error);
-    var dir = path.join(root.dir, "crom_modules", hash);
+    var dir = path.join(root.dir, "crom_modules", sha);
 
     rimraf(dir, function(error) {
       if (error) return void callback(error);
@@ -106,10 +121,37 @@ function extractRelease(root, release, file, callback) {
       fs.createReadStream(file)
           .pipe(unzip.Extract({path: dir}))
           .on("error", callback)
-          .on("close", function() {
-            console.log("✓ " + dir);
-            callback(null, release, hash);
-          });
+          .on("close", cleanup);
+    });
+
+    function cleanup() {
+      console.log("+ " + dir);
+      fs.unlink(file, function(error) {
+        if (error) return void callback(error);
+        console.log("- " + file);
+        callback(null, release, sha);
+      });
+    }
+  });
+}
+
+function findAndUninstall(root, query, callback) {
+  var dependencies = root.findAll(query);
+  if (!dependencies.length) return void callback(new ExternalError("dependency " + query + " not found"));
+
+  if (dependencies.length > 1) {
+    dependencies.forEach(function(d) { console.log("* " + d.url + "@" + d.version); });
+    return void callback(new ExternalError("dependency " + query + " is ambiguous"));
+  }
+
+  var dir = path.join(root.dir, "crom_modules", dependencies[0].sha);
+  rimraf(dir, function(error) {
+    if (error) return void callback(error);
+    console.log("- " + dir);
+    root.uninstall(dependencies[0], function(error) {
+      if (error) return void callback(error);
+      console.log("+ " + path.join(root.dir, "crom.json"));
+      callback(null);
     });
   });
 }
