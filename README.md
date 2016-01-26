@@ -60,16 +60,22 @@ npm install -g crom
 
 (Yes, this step is slightly ironic. But it’s also practical!)
 
-Next, to install a package, say [d3-format](https://github.com/d3/d3-format):
+To install a package by name, say [d3-format](https://github.com/d3/d3-format):
 
 ```
 crom install d3-format
 ```
 
-You can specify just a package name, or an owner name and package name together. So this works, too, and is useful for disambiguating:
+You can also specify an owner name and package name together, which is useful for disambiguation:
 
 ```
 crom install d3/d3-format
+```
+
+And of course you can specify a full URL:
+
+```
+crom install https://github.com/d3/d3-format
 ```
 
 Once Crom finds a matching repository, it looks for the latest release that satisfies the semantic version range you specify. (If you don’t specify a version, it uses the `*` range.) For example, to install d3-format version 0.5, which currently maps to the tag [v0.5.0](https://github.com/d3/d3-format/releases/tag/v0.5.0):
@@ -78,9 +84,9 @@ Once Crom finds a matching repository, it looks for the latest release that sati
 crom install d3-format@0.5
 ```
 
-If Crom finds a satisfying release, it doesn’t clone the Git repository. Instead, it looks for a ZIP file attached to your release, and downloads that; if there’s no attached ZIP file, it downloads the source ZIP instead. So you can put whatever you want inside that ZIP file—namely, generated files—and those will be installed. (The content resolution logic is defined by whichever registry hosts the package.)
+If Crom finds a satisfying release, it doesn’t clone the Git repository; it looks for a ZIP file attached to your release and downloads that; if there’s no attached ZIP file, it downloads the source ZIP instead. So, you can put whatever you want inside that ZIP file—namely, generated files—and those will be installed. (Note that the content resolution logic is extensible and defined by the host registry.)
 
-Crom extracts the ZIP file into a `crom_modules` folder, creating a subfolder for each dependency using content-addressable storage. The above command results in the following file structure:
+Crom extracts the ZIP file into the `crom_modules` folder, creating a subfolder for each dependency using content-addressable storage. The above command results in the following file structure:
 
 ```
 crom_modules
@@ -91,11 +97,11 @@ crom_modules
   └── d3-format.min.js
 ```
 
-Thus, you can install multiple versions of a package, or multiple packages with the same name. And because the `crom.json` file stores the associated metadata, you’ll know when anything changes.
+This means you can install multiple versions of a package or multiple packages with the same name. And because the `crom.json` file stores the associated metadata, you’ll know when anything changes.
 
 ### Loading Packages
 
-Crom is a work-in-progress and I haven’t yet implemented an API for loading packages (*e.g.*, a substitute for `require`). But the idea is that it would scan the crom_modules folder and look for the corresponding module. For example, in Node:
+Crom is a work in progress and I haven’t yet implemented an API for loading packages (*e.g.*, a substitute for `require`). But the idea is that it would scan the crom_modules folder and look for the module matching your requirement. For example, in Node:
 
 ```js
 var format = crom.require("d3-format");
@@ -109,4 +115,4 @@ var format = crom.require("d3/d3-format"); // a fork
 var format = crom.require("https://github.com/d3/d3-format"); // a full url
 ```
 
-Thus, Crom retains the convenience of working with short names; it just makes it so whatever names you like to use locally are explicitly defined so they have the same definition globally, all without requiring a central registry.
+Thus, Crom retains the convenience of working with short names. Crom guarantees that the names you prefer locally are explicitly defined so they have the same definition globally, all without a central registry.
