@@ -47,8 +47,8 @@ GitHub.prototype = Object.assign(Object.create(new Registry), {
 
 function GitHubModule(host, item) {
   this.url = item.html_url;
-  this._name = item.name;
-  this._owner = item.owner.login;
+  this.name = item.name;
+  this.owner = item.owner.login;
   this._host = host;
   this._stars = item.stargazers_count;
 }
@@ -57,26 +57,27 @@ GitHubModule.prototype = Object.assign(Object.create(new Module), {
   findRelease: function(query, callback) {
     var module = this;
     request({
-      url: this._host + "/repos/" + this._owner + "/" + this._name + "/releases",
+      url: this._host + "/repos/" + this.owner + "/" + this.name + "/releases",
       headers: headers
     }, function(error, response, body) {
       if (error) return void callback(error);
-      var release;
+      var releases;
 
       try {
-        release = new GitHubRelease(module, JSON.parse(body)
+        releases = JSON.parse(body)
             .filter(function(release) {
               var tag = release.tag_name;
               return tag[0] === "v"
                   && semver.valid(tag = tag.slice(1))
                   && semver.satisfies(tag, query)
                   && release.assets.some(validAsset);
-            })[0]);
+            });
       } catch (error) {
         return void callback(error);
       }
 
-      callback(null, release);
+      if (!releases.length) return void callback(null, null);
+      callback(null, new GitHubRelease(module, releases[0]));
     });
   },
   toString: function() {
