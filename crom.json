@@ -1,5 +1,5 @@
 {
-  "modules": [
+  "dependencies": [
     {
       "sha": "c7c1fee171767e72c496cd6ce88ab203b7e740c6aeb6eb5add59952337a6ffc8",
       "moduleUrl": "https://github.com/d3/d3-format",

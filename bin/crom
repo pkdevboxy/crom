@@ -11,18 +11,28 @@ var Registry = require("../lib/Registry"),
 
 require("../plugin/GitHub");
 
+if (process.argv[2] !== "install") {
+  console.error("error: unknown command " + process.argv[2]);
+  return process.exit(1);
+}
+
+if (!process.argv[3]) {
+  console.error("error: missing install target");
+  return process.exit(1);
+}
+
 Root.init(".", function(error, root) {
   if (error) throw error;
-  findAndInstall(root, process.argv[2]);
+  findAndInstall(root, process.argv[3]);
 });
 
-function findAndInstall(root, query) {
-  var i = query.indexOf("@"), version = "*";
-  if (i >= 0) version = query.slice(i + 1), query = query.slice(0, i);
+function findAndInstall(root, name) {
+  var i = name.indexOf("@"), version = "*";
+  if (i >= 0) version = name.slice(i + 1), name = name.slice(0, i);
 
-  Registry.findModules(query, function(error, modules) {
+  Registry.findModules(name, function(error, modules) {
     if (error) throw error;
-    if (!modules.length) return void console.error("no module found");
+    if (!modules.length) return void console.error("error: module “" + name + "” not found");
 
     for (var i = 0, n = modules.length; i < n; ++i) {
       console.log((i ? "✗" : "✓") + " " + modules[i]);
@@ -32,8 +42,8 @@ function findAndInstall(root, query) {
   });
 }
 
-function downloadRelease(root, module, range) {
-  module.findRelease(range, function(error, release) {
+function downloadRelease(root, module, version) {
+  module.findRelease(version, function(error, release) {
     if (error) throw error;
     console.log("✓ " + release);
 
