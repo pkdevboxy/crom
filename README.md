@@ -46,7 +46,7 @@ Is equivalent to this:
 crom install https://github.com/d3/d3-format@*
 ```
 
-The current implementation is limited to GitHub’s [repository search API](https://developer.github.com/v3/search/#search-repositories), but again, it should be straightforward to extend this to other registries.
+The current implementation is limited to GitHub’s [repository search API](https://developer.github.com/v3/search/#search-repositories), but again, it should be straightforward to extend this to other registries, such as [npm](https://npmjs.org).
 
 While other package managers also provide similar search functionality, Crom persists the resulting match as a URL in the `crom.json` metadata; thus, the system is decentralized but installations are still stable and deterministic for your users.
 
