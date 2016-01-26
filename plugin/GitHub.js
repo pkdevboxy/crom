@@ -99,8 +99,7 @@ GitHubModule.prototype = Object.assign(Object.create(new Module), {
               var tag = release.tag_name;
               return tag[0] === "v"
                   && semver.valid(tag = tag.slice(1))
-                  && semver.satisfies(tag, query)
-                  && release.assets.some(validAsset);
+                  && semver.satisfies(tag, query);
             });
       } catch (error) {
         return void callback(error);
@@ -120,13 +119,13 @@ function GitHubRelease(module, release) {
   this.module = module;
   this.url = release.html_url;
   this.version = release.tag_name.slice(1);
-  this._assetUrl = asset.browser_download_url;
-  this._assetName = asset.name;
+  this._contentUrl = asset ? asset.browser_download_url : release.zipball_url;
 }
 
 GitHubRelease.prototype = Object.assign(Object.create(new Release), {
   download: function(stream, callback) {
-    request(this._assetUrl)
+    console.log("↳ " + this._contentUrl);
+    request({url: this._contentUrl, headers: headers})
         .pipe(stream)
         .on("error", callback)
         .on("close", callback);

@@ -166,10 +166,43 @@ function extractRelease(root, release, file, callback) {
 
     function cleanup() {
       console.log("+ " + dir);
+      queue(1)
+          .defer(cleanupExtraction)
+          .defer(cleanupFile)
+          .await(function(error) {
+            if (error) return void callback(error)
+            callback(null, release, sha);
+          });
+    }
+
+    function cleanupExtraction(callback) {
+      fs.readdir(dir, function(error, files) {
+        if (error) return void callback(error);
+        if (files.length !== 1) return void cleanupFile();
+        var subdir = path.join(dir, files[0]);
+        fs.stat(subdir, function(error, stat) {
+          if (error) return void callback(error);
+          if (!stat.isDirectory()) return void cleanupFile();
+          fs.readdir(subdir, function(error, subfiles) {
+            if (error) return void callback(error);
+            var q = queue(1);
+
+            subfiles.forEach(function(subfile) {
+              q.defer(fs.rename, path.join(subdir, subfile), path.join(dir, subfile));
+            });
+
+            q.defer(fs.rmdir, subdir);
+            q.awaitAll(callback);
+          });
+        });
+      });
+    }
+
+    function cleanupFile(callback) {
+      console.log("- " + file);
       fs.unlink(file, function(error) {
         if (error) return void callback(error);
-        console.log("- " + file);
-        callback(null, release, sha);
+        callback(null);
       });
     }
   });
