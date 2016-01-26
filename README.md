@@ -52,13 +52,13 @@ While other package managers also provide similar search functionality, a critic
 
 ### Installing Packages
 
-To install Crom, use npm:
+This is highly-experimental, but if you’d like to try it out, install Crom via npm:
 
 ```
 npm install -g crom
 ```
 
-(Yes, this part is slightly ironic. But it’s also practical!)
+(Yes, this step is slightly ironic. But it’s also practical!)
 
 Next, to install a package, say [d3-format](https://github.com/d3/d3-format):
 
