@@ -33,7 +33,9 @@ Root.init(".", function(error, root) {
 
   var q = queue(1);
   for (var i = 3, n = process.argv.length; i < n; ++i) {
-    q.defer(findAndInstall, root, process.argv[i]);
+    var name = process.argv[i], j = name.indexOf("@"), range = "*";
+    if (j >= 0) range = name.slice(j + 1), name = name.slice(0, j);
+    q.defer(findAndInstall, root, name, range);
   }
   q.awaitAll(done);
 
@@ -46,10 +48,7 @@ Root.init(".", function(error, root) {
   }
 });
 
-function findAndInstall(root, name, callback) {
-  var i = name.indexOf("@"), version = "*";
-  if (i >= 0) version = name.slice(i + 1), name = name.slice(0, i);
-
+function findAndInstall(root, name, range, callback) {
   Registry.findModules(name, function(error, modules) {
     if (error) return void callback(error);
     if (!modules.length) return void callback(new ExternalError("module “" + name + "” not found"));
@@ -58,14 +57,22 @@ function findAndInstall(root, name, callback) {
       console.log((i ? "✗" : "✓") + " " + modules[i]);
     }
 
-    downloadRelease(root, modules[0], version, callback);
+    findAndInstallRelease(root, modules[0], range, function(error, release, hash) {
+      if (error) return void callback(error);
+
+      root.install(release, hash, range, function(error) {
+        if (error) return void callback(error);
+        console.log("✓ " + path.join(root.dir, "crom.json"));
+        callback(null);
+      });
+    });
   });
 }
 
-function downloadRelease(root, module, version, callback) {
-  module.findRelease(version, function(error, release) {
+function findAndInstallRelease(root, module, range, callback) {
+  module.findRelease(range, function(error, release) {
     if (error) return void callback(error);
-    if (!release) return void callback(new ExternalError("release " + module.url + "@" + version + " not found"));
+    if (!release) return void callback(new ExternalError("release " + module.url + "@" + range + " not found"));
     console.log("✓ " + release);
 
     var file = path.join(root.dir, "crom_modules", crypto.createHash("sha256")
@@ -98,16 +105,11 @@ function extractRelease(root, release, file, callback) {
 
       fs.createReadStream(file)
           .pipe(unzip.Extract({path: dir}))
-          .on("close", saveIndex);
+          .on("error", callback)
+          .on("close", function() {
+            console.log("✓ " + dir);
+            callback(null, release, hash);
+          });
     });
-
-    function saveIndex() {
-      console.log("✓ " + dir);
-      root.install(release, hash, function(error) {
-        if (error) return void callback(error);
-        console.log("✓ " + path.join(root.dir, "crom.json"));
-        callback(null);
-      });
-    }
   });
 }
