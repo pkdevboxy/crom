@@ -1,142 +1,40 @@
 #!/usr/bin/env node
 
 var fs = require("fs"),
-    validate = require("validate-npm-package-name"),
-    minimist = require("minimist"),
-    rimraf = require("rimraf"),
-    request = require("request"),
-    requestProgress = require("request-progress"),
-    progressBar = require("progress"),
-    querystring = require("querystring"),
-    recursiveReaddir = require("recursive-readdir"),
-    format = require("d3-format"),
-    semver = require("semver"),
-    unzip = require("unzip");
+    path = require("path"),
+    crypto = require("crypto");
 
-var argv = minimist(process.argv);
+var Registry = require("../lib/Registry"),
+    Root = require("../lib/Root");
 
-var headers = {
-  "Accept": "application/vnd.github.v3+json",
-  "User-Agent": "mbostock/crom"
-};
+var query = "d3-format";
 
-switch (argv._[2]) {
-  case "install": return void commandInstall(argv._[3]);
-  case "help": return void commandHelp();
-  default: return void commandError("unknown command: " + argv._[2]);
-}
+require("../plugin/GitHub");
 
-function commandInstall(target) {
-  if (!target) return void commandError("install requires target");
+Root.init(".", function(error, root) {
+  if (error) throw error;
 
-  var i = target.indexOf("@"), version;
-  if (i >= 0) {
-    version = target.slice(i + 1);
-    target = target.slice(0, i);
-  } else {
-    version = "*";
-  }
-
-  console.log("searching " + target);
-  request({
-    url: "https://api.github.com/search/repositories?" + querystring.stringify({
-      q: target,
-      sort: "stars",
-      order: "desc"
-    }),
-    headers: headers
-  }, function(error, response, body) {
+  Registry.findModules(query, function(error, modules) {
     if (error) throw error;
+    if (!modules.length) return void console.error("no module found");
 
-    var item = JSON.parse(body)
-        .items
-        .filter(function(d) {
-          return d.name === target || d.full_name === target;
-        })
-        .filter(function(d) {
-          var match = true; // TODO more filtering?
-          console.log((match ? "✓" : "✗") + " " + d.html_url + " (★" + format.format(",d")(d.stargazers_count) + ")");
-          return match;
-        })[0];
+    for (var i = 0, n = modules.length; i < n; ++i) {
+      console.log((i ? "✗" : "✓") + " " + modules[i]);
+    }
 
-    if (!item) return void commandError("package not found: " + target);
+    modules[0].findRelease("*", function(error, release) {
+      if (error) throw error;
+      console.log("✓ " + release);
 
-    install(item, version);
-  });
-}
+      var file = path.join(root.dir, "crom_modules", crypto.createHash("sha256")
+          .update(release.url)
+          .digest("hex")
+          + ".zip");
 
-function install(item, version) {
-  console.log("versions " + version);
-  request({
-    url: "https://api.github.com/repos/" + item.full_name + "/releases",
-    headers: headers
-  }, function(error, response, body) {
-    if (error) throw error;
-
-    var release = JSON.parse(body)
-        .filter(function(d) {
-          var tag = d.tag_name;
-          if (tag[0] !== "v" || !semver.valid(tag = tag.slice(1))) return false;
-          var match = semver.satisfies(tag, version);
-          console.log((match ? "✓" : "✗") + " " + tag);
-          return match;
-        })[0];
-
-    if (!release) return void commandError("release not found: " + version);
-
-    console.log("assets " + release.tag_name);
-
-    var asset = release.assets
-        .filter(function(d) {
-          var match = /\.zip$/.test(d.name);
-          console.log((match ? "✓" : "✗") + " " + d.name);
-          return match;
-        })[0];
-
-    if (!asset) return void commandError("release asset not found");
-
-    download(item, release, asset);
-  });
-}
-
-// TODO resolve naming conflicts in item name
-function download(item, release, asset) {
-  if (!validate(item.name)) throw new Error("invalid package name: " + item.name);
-
-  rimraf.sync("crom_modules/" + item.name, {disableGlob: true});
-
-  var bar = new progressBar("downloading [:bar] :percent :etas", {
-    total: 1,
-    width: 60,
-    incomplete: " ",
-    clear: true
-  });
-
-  bar.tick(0);
-
-  requestProgress(request(asset.browser_download_url), {})
-      .on("progress", function(state) { bar.tick(state.percentage); })
-      .on("end", function() { bar.tick(1); })
-      .pipe(unzip.Extract({path: "crom_modules/" + item.name}))
-      .on("close", function() { done(item, release); });
-}
-
-function done(item, release) {
-  console.log("installed " + item.name + "@" + release.tag_name.slice(1));
-  recursiveReaddir("crom_modules/" + item.name, function(error, files) {
-    if (error) throw error;
-    files.forEach(function(file) {
-      console.log("↳ " + file);
+      release.download(fs.createWriteStream(file), function(error) {
+        if (error) throw error;
+        console.log("✓ " + file);
+      });
     });
   });
-}
-
-function commandHelp() {
-  console.log("help!");
-}
-
-function commandError(message) {
-  console.warn("Error: " + message);
-  commandHelp();
-  process.exit(1);
-}
+});

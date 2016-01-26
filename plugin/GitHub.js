@@ -1,7 +1,5 @@
-var fs = require("fs"),
-    request = require("request"),
+var request = require("request"),
     semver = require("semver"),
-    unzip = require("unzip"),
     format = require("d3-format");
 
 var Registry = require("../lib/Registry"),
@@ -49,9 +47,9 @@ GitHub.prototype = Object.assign(Object.create(new Registry), {
 
 function GitHubModule(host, item) {
   this.url = item.html_url;
-  this._host = host;
   this._name = item.name;
   this._owner = item.owner.login;
+  this._host = host;
   this._stars = item.stargazers_count;
 }
 
@@ -87,18 +85,20 @@ GitHubModule.prototype = Object.assign(Object.create(new Module), {
 });
 
 function GitHubRelease(module, release) {
+  var asset = release.assets.filter(validAsset)[0];
   this.module = module;
   this.url = release.html_url;
   this.version = release.tag_name.slice(1);
-  this._assetUrl = release.assets.filter(validAsset).map(function(a) { return a.browser_download_url; })[0];
+  this._assetUrl = asset.browser_download_url;
+  this._assetName = asset.name;
 }
 
 GitHubRelease.prototype = Object.assign(Object.create(new Release), {
-  download: function(path, callback) {
+  download: function(stream, callback) {
     request(this._assetUrl)
-        .pipe(fs.createWriteStream(path))
+        .pipe(stream)
         .on("error", callback)
-        .on("end", callback);
+        .on("close", callback);
   }
 });
 
