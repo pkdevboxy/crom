@@ -24,7 +24,7 @@ Yet upon installation, Crom expands the name to an explicit definition which is 
 }
 ```
 
-Thus, Crom allows your users to install your package and its dependencies *without a registry*: dependencies are self-describing because they are defined by URLs rather than names. This brings us out of the AOL keyword era and onto the modern internet. Package managers should be decoupled from package registries because **authors should be free to publish their software on any platform**, and **users should be free to install software from any platform**.
+Thus, Crom allows your users to install your package and its dependencies *without a registry*: dependencies are self-describing URLs rather than names. This brings us out of the AOL keyword era and onto the modern internet. Package managers should be decoupled from package registries because **authors should be free to publish their software on any platform**, and **users should be free to install software from any platform**.
 
 ### Version Discovery
 
