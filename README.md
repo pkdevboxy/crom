@@ -3,7 +3,7 @@
 Crom is an experimental, proof-of-concept package manager that avoids a centralized registry. Like other package managers, Crom allows you to install packages conveniently by name and (optional) version range:
 
 ```
-crom install d3-voronoi@0.2
+crom install d3/d3-voronoi@0.2
 ```
 
 Yet upon installation, Crom expands the name to an explicit definition which is stored in the `crom.json` file:
@@ -34,13 +34,27 @@ The current implementation only knows how to talk to GitHub’s [releases API](h
 
 ### Package Discovery
 
-When you ask Crom to install a package by name, it searches an extensible list of registries and installs the best match. Although this may appear less safe than a separate `search` command, installing with Crom is safe (it merely extracts a ZIP file; it doesn’t run code), and easily undoable in the case it installed the wrong thing. This:
+When you ask Crom to install a package by name, it searches an extensible list of registries. If only one match is found, it is installed; otherwise, a list of results is presented, and you must choose which of the packages you’d like to install. For example:
 
 ```
 crom install d3-format
 ```
 
-Is equivalent to this:
+Might display the following error:
+
+```
+? https://github.com/d3/d3-format (★98)
+? https://github.com/jfsiii/d3-format (★0)
+error: multiple “d3-format” modules found
+```
+
+To disambiguate slightly:
+
+```
+crom install d3/d3-format
+```
+
+Or to disambiguate fully:
 
 ```
 crom install https://github.com/d3/d3-format@*
@@ -66,13 +80,13 @@ To install a package by name, say [d3-format](https://github.com/d3/d3-format):
 crom install d3-format
 ```
 
-You can also specify an owner name and package name together, which is useful for disambiguation:
+If there are multiple matches, Crom displays them and aborts, requiring you to specify exactly which one you want to install. For example, you can specify an owner name:
 
 ```
 crom install d3/d3-format
 ```
 
-And of course you can specify a full URL:
+Or you can specify a full URL:
 
 ```
 crom install https://github.com/d3/d3-format
@@ -81,7 +95,7 @@ crom install https://github.com/d3/d3-format
 Once Crom finds a matching repository, it looks for the latest release that satisfies the semantic version range you specify. (If you don’t specify a version, it uses the `*` range.) For example, to install d3-format version 0.5, which currently maps to the tag [v0.5.0](https://github.com/d3/d3-format/releases/tag/v0.5.0):
 
 ```
-crom install d3-format@0.5
+crom install d3/d3-format@0.5
 ```
 
 If Crom finds a satisfying release, it doesn’t clone the Git repository; it looks for a ZIP file attached to your release and downloads that; if there’s no attached ZIP file, it downloads the source ZIP instead. So, you can put whatever you want inside that ZIP file—namely, generated files—and those will be installed. (Note that the content resolution logic is extensible and defined by the host registry.)
