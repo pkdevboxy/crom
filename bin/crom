@@ -74,12 +74,17 @@ function findAndInstall(root, name, range, direct, callback) {
   } else {
     Registry.findModules(name, function(error, modules) {
       if (error) return void callback(error);
-      if (!modules.length) return void callback(new ExternalError("module “" + name + "” not found"));
 
-      for (var i = 0, n = modules.length; i < n; ++i) {
-        console.log((i ? "✗" : "✓") + " " + modules[i]);
+      if (!modules.length) {
+        return void callback(new ExternalError("module “" + name + "” not found"));
       }
 
+      if (modules.length > 1) {
+        for (var i = 0, n = modules.length; i < n; ++i) console.log("? " + modules[i]);
+        return void callback(new ExternalError("multiple “" + name + "” modules found"));
+      }
+
+      console.log("✓ " + modules[0]);
       installModule(modules[0]);
     });
   }
