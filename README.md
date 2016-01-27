@@ -40,7 +40,7 @@ When you ask Crom to install a package by name, it searches an extensible list o
 crom install d3-format
 ```
 
-Might display the following error:
+This currently displays the following error:
 
 ```
 ? https://github.com/d3/d3-format (★98)
