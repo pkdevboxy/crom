@@ -1,5 +1,7 @@
 # Crom
 
+PLEASE NOTE: This is a thought experiment, not production software. The ideas presented here are nascent, possibly stupid, and may change at any time. (For example, maybe Crom should [publish to IPFS](https://github.com/mbostock/crom/issues/11)?)
+
 Crom is an experimental, proof-of-concept package manager that avoids a centralized registry. Like other package managers, Crom allows you to install packages conveniently by name and (optional) version range:
 
 ```
@@ -24,7 +26,7 @@ Yet upon installation, Crom expands the name to an explicit definition which is 
 }
 ```
 
-Thus, Crom allows your users to install your package and its dependencies *without a registry*: dependencies are self-describing URLs rather than names. The adoption of URLs brings us out of the AOL keyword era and onto the modern internet. Package managers should be decoupled from package registries because **authors should be free to publish their software on any platform**, and **users should be free to install software from any platform**.
+Thus, Crom allows you to install a package and its dependencies *without a registry*: dependencies are self-describing URLs rather than names, bringing us out of the AOL keyword era and onto the modern internet. Package managers should be decoupled from package registries because **authors should be free to publish their software on any platform**, and **users should be free to install software from any platform**.
 
 ### Version Discovery
 
